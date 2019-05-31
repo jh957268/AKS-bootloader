@@ -273,6 +273,7 @@ unsigned char bootlaoderState;
 #define FIRMWARE_START_ADDR		0x4000
 #define BLOCK_SIZE				512   // 512 bytes from eCos to SAMD
 #define APP_CODE_SIZE			(26 * 1024)
+#define APP_CODE_MIN_SIZE		(20 * 1024)
 
 unsigned char bootwaittimeElapsed;
 __attribute__((__aligned__(256))) \
@@ -2527,6 +2528,9 @@ int compute_code_chksum(void)
 	firmwareCodeInfo = firmwareInfoInEEPROM.read();
 	
 	code_len = (firmwareCodeInfo.code_len_high << 8) | firmwareCodeInfo.code_len_lo;
+	
+	if ((code_len < APP_CODE_MIN_SIZE) || (code_len > APP_CODE_SIZE))
+		return -1;
 	
 	for (i = 0; i < code_len; i++)
 	{
