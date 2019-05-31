@@ -404,7 +404,7 @@ void setup()
   pinMode(A0, OUTPUT);// Sets up the system latch
   digitalWrite(A0, HIGH);// Hold system on
   pinMode (PowerLEDPin, OUTPUT);// Sets up the Power LED
-  digitalWrite(PowerLEDPin, HIGH);// Power LED
+  // digitalWrite(PowerLEDPin, HIGH);// Power LED JOO do not turn on the power LED yet to let user keep pressing the power button, let APP to turn it on  !!!!!!
   pinMode(A1, INPUT_PULLUP); //PullUp for power button detector
   pinMode(13, INPUT_PULLUP); //PullUp for link button detector
   if (!digitalRead(13))bootToUpdate = true;
@@ -1065,7 +1065,7 @@ void CheckID()
 void Shutdown()
 {
     // loadDataToEEPROM();
-    delay(100);
+    delay(200);
 	digitalWrite(A0, LOW);
 	//NVIC_SystemReset();
 }
@@ -2322,7 +2322,7 @@ void BlinkLeds(void)
 		if (powerLedtimeElapsed >= powerLedtimeInterval )
 		{
 			powerLedState ^= 1;
-			digitalWrite(wifiLEDPin, powerLedState);
+			digitalWrite(BatLEDPin, powerLedState);			// Use BatLEDPin
 			powerLedtimeElapsed = 0;
 		}
 	}
@@ -2417,7 +2417,7 @@ void BootLoaderStateMachine(void)
 				rcv_len = Serial1.readBytes(bootRcvBuffer, 4);
 				if (4 != rcv_len)
 				{
-					bootlaoderState = BOOT_WAIT_ARTNET;			// starto ver, ecos will timout and abort downloading
+					bootlaoderState = BOOT_WAIT_ARTNET;			// start over, ecos will timout and abort downloading
 					break;
 				}
 				bootRcvBuffer[4] = 0;
@@ -2430,6 +2430,7 @@ void BootLoaderStateMachine(void)
 					firmwareCodeInfo.code_cksum = bootRcvBuffer[2];
 					firmwareInfoInEEPROM.write(firmwareCodeInfo);
 					Serial1.println("ok");
+					Shutdown();
 					// reset here
 					break;	
 				}
@@ -2443,7 +2444,7 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
-				bootlaoderState = BOOT_WAIT_ARTNET;			// 
+				bootlaoderState = BOOT_WAIT_ARTNET;			// Not receiving anything, start over
 			}
 			break;
 		case BOOT_STARTUP_APP:
@@ -2452,7 +2453,10 @@ void BootLoaderStateMachine(void)
 			{
 				bootlaoderState = BOOT_WAIT_ARTNET;
 				blinkWifiLed = true;
+				blinkPowerLed = true;					// actually is BatLED. blink two leds to indicate waiting for code downloading
 				wifiLedtimeElapsed = 0;
+				powerLedtimeElapsed = 0;
+				digitalWrite(PowerLEDPin, HIGH);		// turn on powerLED, such that user can remove holding the power button
 			}
 			break;
 		default:
