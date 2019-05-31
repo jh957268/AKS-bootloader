@@ -213,10 +213,22 @@ typedef struct
 
 } Settings;
 
-// FlashStorage(settingsInEEPROM, Settings);
+#if 0
+typedef struct
+{
+	unsigned char code_len_lo;
+	unsigned char code_len_high;
+	unsigned char code_cksum;
+
+} Setting1s;
+
+FlashStorage(settingsInEEPROM, Settings);
+#endif
 
 Settings settingsBeforeLoad;
 Settings settingsAfterLoad;
+
+// Setting1s settingsBeforeLoad1;
 
 // bootloader stuff
 
@@ -227,9 +239,9 @@ typedef struct
 	unsigned char code_cksum;
 } firmwareInfo;
 
-firmwareInfo firmwareCodeInfo;
-
 FlashStorage(firmwareInfoInEEPROM, firmwareInfo);
+
+firmwareInfo firmwareCodeInfo;
 
 bool blinkWifiLed;
 bool blinkPowerLed;
@@ -244,6 +256,8 @@ unsigned int flash_code_ptr;
 
 void BlinkLeds(void);
 void BootLoaderStateMachine(void);
+int compute_chksum(void);
+int compute_code_chksum(void);
 
 unsigned char bootlaoderState;
 
@@ -2328,6 +2342,9 @@ void BlinkLeds(void)
 	}
 }
 
+// The assumption is ecos will send packet by packet, the bytes stream in a packet cannot have more that 10ms apart, since timeread char is set to 10ms timeout
+// Once readbyts returns, it will have all the required bytes or it is assume error.
+
 void BootLoaderStateMachine(void)
 {
 	int rcv_len = 0;
@@ -2434,13 +2451,31 @@ void BootLoaderStateMachine(void)
 					// reset here
 					break;	
 				}
+
 				// read the rest plus one cksum
-				Serial1.readBytes(&bootRcvBuffer[4], BLOCK_SIZE - 4 + 1);
+				rcv_len = Serial1.readBytes(&bootRcvBuffer[4], BLOCK_SIZE - 4 + 1);
+				if (rcv_len != BLOCK_SIZE - 4 + 1)
+				{
+					// not enough bytes, and timeread char has waited 10ms with no data 
+					Serial1.clear();						// just for the safe side
+					Serial1.println("err");
+					bootwaittimeElapsed = 0;					// have received a packet, re-start the timer.
+					break;
+				}
+				
 				// compute cksum
-				FlashClass_write((void *)flash_code_ptr, bootRcvBuffer, BLOCK_SIZE);
-				flash_code_ptr += BLOCK_SIZE;
-				Serial1.println("ok");
-				bootwaittimeElapsed = 0;					// have received a packet, re-start the timer.
+				if ( 0 == compute_chksum())
+				{
+					FlashClass_write((void *)flash_code_ptr, bootRcvBuffer, BLOCK_SIZE);
+					flash_code_ptr += BLOCK_SIZE;
+					Serial1.clear();						// just for the safe side					
+					Serial1.println("ok");					
+				}
+				else
+				{
+					Serial1.clear();						// just for the safe side
+					Serial1.println("err");					
+				}
 			}
 			else
 			{
@@ -2449,7 +2484,7 @@ void BootLoaderStateMachine(void)
 			break;
 		case BOOT_STARTUP_APP:
 			// Compute the check sum of the code
-			if (1 /* no valid code */)
+			if (-1 == compute_code_chksum())
 			{
 				bootlaoderState = BOOT_WAIT_ARTNET;
 				blinkWifiLed = true;
@@ -2458,10 +2493,48 @@ void BootLoaderStateMachine(void)
 				powerLedtimeElapsed = 0;
 				digitalWrite(PowerLEDPin, HIGH);		// turn on powerLED, such that user can remove holding the power button
 			}
+			else
+			{
+				// Jump to APP code
+			}
 			break;
 		default:
 			break;
 	}
+}
+
+int compute_chksum(void)
+{
+	int i;
+	unsigned char cksum = 0;
+	
+	for (i = 0; i <BLOCK_SIZE; i++ )
+	{
+		cksum ^= bootRcvBuffer[i];
+	}
+	if (cksum == bootRcvBuffer[BLOCK_SIZE])
+		return 0;
+	else
+		return -1;
+}
+
+int compute_code_chksum(void)
+{
+	unsigned int code_len, i;
+	unsigned char *code_ptr = (unsigned char *)FIRMWARE_START_ADDR;
+	unsigned char cksum = 0;
+	
+	firmwareCodeInfo = firmwareInfoInEEPROM.read();
+	
+	code_len = (firmwareCodeInfo.code_len_high << 8) | firmwareCodeInfo.code_len_lo;
+	
+	for (i = 0; i < code_len; i++)
+	{
+		cksum ^= code_ptr[i];
+	}
+	if (cksum == firmwareCodeInfo.code_cksum)
+		return 0;
+	return -1;
 }
 
 
