@@ -2496,7 +2496,17 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
+				uint32_t * ptr_reset_vector;
+				uint32_t * ptr_msp;
+				uint32_t app_start_add;
 				// Jump to APP code
+				__disable_irq();
+				//Get reset vector from intvect table of application
+				ptr_reset_vector = (uint32_t *) (FIRMWARE_START_ADDR+4);
+				app_start_add = (*ptr_reset_vector);
+				ptr_msp = (uint32_t *) (FIRMWARE_START_ADDR);
+				__set_MSP(*(ptr_msp));
+				asm("bx %0"::"r"(app_start_add));								
 			}
 			break;
 		default:
