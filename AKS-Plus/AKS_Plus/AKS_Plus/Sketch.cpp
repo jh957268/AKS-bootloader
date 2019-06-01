@@ -270,7 +270,7 @@ unsigned char bootlaoderState;
 #define BOOT_WAIT_ARTNET		6
 
 #define BOOTWAITTIMEELAPSED		200   // 200 ms
-#define FIRMWARE_START_ADDR		0x4000
+#define FIRMWARE_START_ADDR		(16 * 1024)
 #define BLOCK_SIZE				512   // 512 bytes from eCos to SAMD
 #define APP_CODE_SIZE			(26 * 1024)
 #define APP_CODE_MIN_SIZE		(20 * 1024)
@@ -2496,6 +2496,15 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
+#if 1				
+								bootlaoderState = BOOT_WAIT_ARTNET;
+								blinkWifiLed = true;
+								blinkPowerLed = false;					// actually is BatLED. blink two leds to indicate waiting for code downloading
+								wifiLedtimeElapsed = 0;
+								powerLedtimeElapsed = 0;
+								digitalWrite(PowerLEDPin, HIGH);		// turn on powerLED, such that user can remove holding the power button
+#endif								
+#if 0				
 				uint32_t * ptr_reset_vector;
 				uint32_t * ptr_msp;
 				uint32_t app_start_add;
@@ -2506,7 +2515,8 @@ void BootLoaderStateMachine(void)
 				app_start_add = (*ptr_reset_vector);
 				ptr_msp = (uint32_t *) (FIRMWARE_START_ADDR);
 				__set_MSP(*(ptr_msp));
-				asm("bx %0"::"r"(app_start_add));								
+				asm("bx %0"::"r"(app_start_add));
+#endif												
 			}
 			break;
 		default:
