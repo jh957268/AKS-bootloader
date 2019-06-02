@@ -272,8 +272,8 @@ unsigned char bootlaoderState;
 #define BOOTWAITTIMEELAPSED		200   // 200 ms
 #define FIRMWARE_START_ADDR		(16 * 1024)
 #define BLOCK_SIZE				512   // 512 bytes from eCos to SAMD
-#define APP_CODE_SIZE			(26 * 1024)
-#define APP_CODE_MIN_SIZE		(20 * 1024)
+#define APP_CODE_SIZE			(64 * 1024)
+#define APP_CODE_MIN_SIZE		(56 * 1024)
 
 unsigned char bootwaittimeElapsed;
 __attribute__((__aligned__(256))) \
@@ -1080,7 +1080,7 @@ void CheckID()
 void Shutdown()
 {
     // loadDataToEEPROM();
-    delay(200);
+    delay(1000);
 	digitalWrite(A0, LOW);
 	//NVIC_SystemReset();
 }
@@ -2496,18 +2496,19 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
-#if 1				
+#if 0				
 								bootlaoderState = BOOT_WAIT_ARTNET;
 								blinkWifiLed = true;
 								blinkPowerLed = false;					// actually is BatLED. blink two leds to indicate waiting for code downloading
 								wifiLedtimeElapsed = 0;
 								powerLedtimeElapsed = 0;
-								digitalWrite(PowerLEDPin, HIGH);		// turn on powerLED, such that user can remove holding the power button
+								digitalWrite(PowerLEDPin, HIGH);		// turn on powerLED, such that user can remove holding the power button 
 #endif								
-#if 0				
+#if 1				
 				uint32_t * ptr_reset_vector;
 				uint32_t * ptr_msp;
 				uint32_t app_start_add;
+				//void (*application_code_entry)(void);
 				// Jump to APP code
 				__disable_irq();
 				//Get reset vector from intvect table of application
@@ -2515,6 +2516,17 @@ void BootLoaderStateMachine(void)
 				app_start_add = (*ptr_reset_vector);
 				ptr_msp = (uint32_t *) (FIRMWARE_START_ADDR);
 				__set_MSP(*(ptr_msp));
+				
+				/* Rebase the vector table base address */
+				SCB->VTOR = ((uint32_t) FIRMWARE_START_ADDR & SCB_VTOR_TBLOFF_Msk);
+				
+				/* Load the Reset Handler address of the application */
+
+				//application_code_entry = (void (*)(void))(unsigned *)(*(unsigned *)(FIRMWARE_START_ADDR +4));
+				
+				/* Jump to user Reset Handler in the application */
+
+				//application_code_entry();
 				asm("bx %0"::"r"(app_start_add));
 #endif												
 			}
