@@ -588,7 +588,8 @@ buffer[0] = 1;//settingsAfterLoad.timo_DMX_Control;
   char CMD[] = "ENTM";
   sendCommand(CMD);
 #endif  
-  blinkWifiLed = false;
+  blinkWifiLed = true;
+  wifiLedtimeElapsed = 0;
   blinkPowerLed = false;
   bootlaoderState = BOOT_SEND_UPADTE1;
 }
