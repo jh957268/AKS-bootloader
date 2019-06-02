@@ -272,8 +272,8 @@ unsigned char bootlaoderState;
 #define BOOTWAITTIMEELAPSED		200   // 200 ms
 #define FIRMWARE_START_ADDR		(16 * 1024)
 #define BLOCK_SIZE				512   // 512 bytes from eCos to SAMD
-#define APP_CODE_SIZE			(64 * 1024)
-#define APP_CODE_MIN_SIZE		(56 * 1024)
+#define APP_CODE_SIZE			(66 * 1024)
+#define APP_CODE_MIN_SIZE		(18 * 1024)
 
 unsigned char bootwaittimeElapsed;
 __attribute__((__aligned__(256))) \
