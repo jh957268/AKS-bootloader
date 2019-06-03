@@ -274,6 +274,7 @@ unsigned char bootlaoderState;
 #define BLOCK_SIZE				512   // 512 bytes from eCos to SAMD
 #define APP_CODE_SIZE			(66 * 1024)
 #define APP_CODE_MIN_SIZE		(18 * 1024)
+#define BOOTCNT_ADDR			(70 * 1024)
 
 unsigned char bootwaittimeElapsed;
 __attribute__((__aligned__(256))) \
@@ -2511,6 +2512,7 @@ void BootLoaderStateMachine(void)
 				uint32_t app_start_add;
 				//void (*application_code_entry)(void);
 				// Jump to APP code
+				//update_boot_count();
 				__disable_irq();
 				//Get reset vector from intvect table of application
 				ptr_reset_vector = (uint32_t *) (FIRMWARE_START_ADDR+4);
@@ -2572,6 +2574,21 @@ int compute_code_chksum(void)
 	if (cksum == firmwareCodeInfo.code_cksum)
 		return 0;
 	return -1;
+}
+
+void update_boot_count(void)
+{
+	unsigned char *bootcnt_ptr = (unsigned char *)BOOTCNT_ADDR;
+	unsigned char bootcnt = *bootcnt_ptr;
+	
+	if (bootcnt == 0xff)
+	{
+		bootcnt = 0;
+	}
+	else 
+		bootcnt += 1;
+	FlashClass_erase((void *)BOOTCNT_ADDR, 1);
+	FlashClass_write((void *)bootcnt_ptr, &bootcnt, 1);
 }
 
 
