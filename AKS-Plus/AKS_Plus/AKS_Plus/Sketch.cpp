@@ -2584,9 +2584,11 @@ void update_boot_count(void)
 	if (bootcnt == 0xff)
 	{
 		bootcnt = 0;
+		FlashClass_write((void *)bootcnt_ptr, &bootcnt, 1);		// no need to erase, 0xff can be changed to 0
+		return;
 	}
-	else 
-		bootcnt += 1;
+
+	bootcnt += 1;
 	FlashClass_erase((void *)BOOTCNT_ADDR, 1);
 	FlashClass_write((void *)bootcnt_ptr, &bootcnt, 1);
 }
