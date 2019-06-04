@@ -2542,13 +2542,21 @@ void BootLoaderStateMachine(void)
 int compute_chksum(void)
 {
 	int i;
-	unsigned char cksum = 0;
+	unsigned char bcksum = 0, *pCksum;;
+	uint32_t cksum;
+	uint32_t *pDat;
 	
-	for (i = 0; i <BLOCK_SIZE; i++ )
+	pDat = (uint32_t *)bootRcvBuffer;
+	cksum = 0;
+	
+	for (i = 0; i < (BLOCK_SIZE >> 2); i++ )
 	{
-		cksum ^= bootRcvBuffer[i];
+		//cksum ^= bootRcvBuffer[i];
+		cksum ^= *pDat++;
 	}
-	if (cksum == bootRcvBuffer[BLOCK_SIZE])
+	pCksum = (unsigned char *)&cksum;
+	bcksum = pCksum[0] ^ pCksum[1] ^ pCksum[2] ^ pCksum[3]; 
+	if (bcksum == bootRcvBuffer[BLOCK_SIZE])
 		return 0;
 	else
 		return -1;
@@ -2557,8 +2565,9 @@ int compute_chksum(void)
 int compute_code_chksum(void)
 {
 	unsigned int code_len, i;
-	unsigned char *code_ptr = (unsigned char *)FIRMWARE_START_ADDR;
+	uint32_t *code_ptr = (uint32_t *)FIRMWARE_START_ADDR;
 	unsigned char cksum = 0;
+	unsigned char bcksum = 0, *pCksum;;
 	
 	firmwareCodeInfo = firmwareInfoInEEPROM.read();
 	
@@ -2567,11 +2576,13 @@ int compute_code_chksum(void)
 	if ((code_len < APP_CODE_MIN_SIZE) || (code_len > APP_CODE_SIZE))
 		return -1;
 	
-	for (i = 0; i < code_len; i++)
+	for (i = 0; i < (code_len >> 2); i++)
 	{
 		cksum ^= code_ptr[i];
 	}
-	if (cksum == firmwareCodeInfo.code_cksum)
+	pCksum = (unsigned char *)&cksum;
+	bcksum = pCksum[0] ^ pCksum[1] ^ pCksum[2] ^ pCksum[3]; 	
+	if (bcksum == firmwareCodeInfo.code_cksum)
 		return 0;
 	return -1;
 }
