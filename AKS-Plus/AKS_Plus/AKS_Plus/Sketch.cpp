@@ -470,7 +470,7 @@ void setup()
 //settingsAfterLoad = settingsBeforeLoad;
   pinMode (5, OUTPUT);// Sets up the DMX RX/TX
   pinMode (6, OUTPUT);
-  isdmxTX(false);
+  // isdmxTX(false);
   //Wire.begin();
   SPI.begin();// Sets us the SPI
   SPI.beginTransaction(settingsA);// Starts an SPI Transaction
@@ -1445,6 +1445,7 @@ void timo_send_DMX()
 #endif  // DELETE
 
 
+#if DELETE
 void checkAndParseUDP()
 {
      if(trueForArtnet)
@@ -1734,6 +1735,7 @@ void DMXactivity()
     }
   }
 }
+#endif
 
 #if DELETE
 void sendArtpollReply()
@@ -2566,7 +2568,7 @@ int compute_code_chksum(void)
 {
 	unsigned int code_len, i;
 	uint32_t *code_ptr = (uint32_t *)FIRMWARE_START_ADDR;
-	unsigned char cksum = 0;
+	uint32_t cksum = 0;
 	unsigned char bcksum = 0, *pCksum;;
 	
 	firmwareCodeInfo = firmwareInfoInEEPROM.read();
