@@ -2331,6 +2331,7 @@ void BlinkLeds(void)
 	{
 		if (wifiLedtimeElapsed >= wifiLedtimeInterval )
 		{
+			Serial1.println("B");
 			wifiLedState ^= 1;
 			digitalWrite(wifiLEDPin, wifiLedState);
 			wifiLedtimeElapsed = 0;
@@ -2419,6 +2420,7 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
+				Serial1.println("w y timeout");
 				if (BOOT_WAIT_YES2 == bootlaoderState)
 				{
 					bootlaoderState = BOOT_STARTUP_APP;
@@ -2491,6 +2493,7 @@ void BootLoaderStateMachine(void)
 			// Compute the check sum of the code
 			if (-1 == compute_code_chksum())
 			{
+				Serial1.println("R");
 				bootlaoderState = BOOT_WAIT_ARTNET;
 				blinkWifiLed = true;
 				blinkPowerLed = true;					// actually is BatLED. blink two leds to indicate waiting for code downloading
@@ -2500,6 +2503,7 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
+				Serial1.println("S");
 #if 0				
 								bootlaoderState = BOOT_WAIT_ARTNET;
 								blinkWifiLed = true;
