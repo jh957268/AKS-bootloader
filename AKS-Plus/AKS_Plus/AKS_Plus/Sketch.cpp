@@ -276,7 +276,7 @@ unsigned char bootlaoderState;
 #define APP_CODE_MIN_SIZE		(18 * 1024)
 #define BOOTCNT_ADDR			(70 * 1024)
 
-unsigned char bootwaittimeElapsed;
+elapsedMillis bootwaittimeElapsed;
 __attribute__((__aligned__(256))) \
 static uint8_t bootRcvBuffer[1024];
 
@@ -2331,7 +2331,7 @@ void BlinkLeds(void)
 	{
 		if (wifiLedtimeElapsed >= wifiLedtimeInterval )
 		{
-			Serial1.println("B");
+			//Serial1.println("B");
 			wifiLedState ^= 1;
 			digitalWrite(wifiLEDPin, wifiLedState);
 			wifiLedtimeElapsed = 0;
@@ -2420,7 +2420,7 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
-				Serial1.println("w y timeout");
+				//Serial1.println("w y timeout");
 				if (BOOT_WAIT_YES2 == bootlaoderState)
 				{
 					bootlaoderState = BOOT_STARTUP_APP;
@@ -2476,12 +2476,14 @@ void BootLoaderStateMachine(void)
 					FlashClass_write((void *)flash_code_ptr, bootRcvBuffer, BLOCK_SIZE);
 					flash_code_ptr += BLOCK_SIZE;
 					Serial1.clear();						// just for the safe side					
-					Serial1.println("ok");					
+					Serial1.println("ok");
+					bootwaittimeElapsed = 0;					
 				}
 				else
 				{
 					Serial1.clear();						// just for the safe side
-					Serial1.println("err");					
+					Serial1.println("err");
+					bootwaittimeElapsed = 0;					
 				}
 			}
 			else
@@ -2493,7 +2495,7 @@ void BootLoaderStateMachine(void)
 			// Compute the check sum of the code
 			if (-1 == compute_code_chksum())
 			{
-				Serial1.println("R");
+				//Serial1.println("R");
 				bootlaoderState = BOOT_WAIT_ARTNET;
 				blinkWifiLed = true;
 				blinkPowerLed = true;					// actually is BatLED. blink two leds to indicate waiting for code downloading
@@ -2503,7 +2505,7 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
-				Serial1.println("S");
+				//Serial1.println("S");
 #if 0				
 								bootlaoderState = BOOT_WAIT_ARTNET;
 								blinkWifiLed = true;
@@ -2545,22 +2547,23 @@ void BootLoaderStateMachine(void)
 	}
 }
 
+uint32_t scksum;
 int compute_chksum(void)
 {
 	int i;
-	unsigned char bcksum = 0, *pCksum;;
-	uint32_t cksum;
+	unsigned char bcksum = 0, *pCksum;
+	//uint32_t scksum = 0;
 	uint32_t *pDat;
 	
+	scksum = 0;
 	pDat = (uint32_t *)bootRcvBuffer;
-	cksum = 0;
 	
 	for (i = 0; i < (BLOCK_SIZE >> 2); i++ )
 	{
 		//cksum ^= bootRcvBuffer[i];
-		cksum ^= *pDat++;
+		scksum ^= pDat[i];
 	}
-	pCksum = (unsigned char *)&cksum;
+	pCksum = (unsigned char *)&scksum;
 	bcksum = pCksum[0] ^ pCksum[1] ^ pCksum[2] ^ pCksum[3]; 
 	if (bcksum == bootRcvBuffer[BLOCK_SIZE])
 		return 0;
@@ -2573,7 +2576,7 @@ int compute_code_chksum(void)
 	unsigned int code_len, i;
 	uint32_t *code_ptr = (uint32_t *)FIRMWARE_START_ADDR;
 	uint32_t cksum = 0;
-	unsigned char bcksum = 0, *pCksum;;
+	unsigned char bcksum = 0, *pCksum;
 	
 	firmwareCodeInfo = firmwareInfoInEEPROM.read();
 	
