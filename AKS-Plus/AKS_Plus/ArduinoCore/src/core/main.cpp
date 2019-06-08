@@ -39,7 +39,8 @@ int main( void )
 
   initVariant();
 
-  delay(1);
+__enable_irq();
+  delay(5);
 #if defined(USBCON)
   USBDevice.init();
   USBDevice.attach();
