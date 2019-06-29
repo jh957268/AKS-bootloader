@@ -2454,7 +2454,9 @@ void BootLoaderStateMachine(void)
 					firmwareCodeInfo.code_cksum = bootRcvBuffer[2];
 					firmwareInfoInEEPROM.write(firmwareCodeInfo);
 					Serial1.println("ok");
-					Shutdown();
+					//Shutdown();
+					delay(1000);
+					bootlaoderState = BOOT_STARTUP_APP;	
 					// reset here
 					break;	
 				}
