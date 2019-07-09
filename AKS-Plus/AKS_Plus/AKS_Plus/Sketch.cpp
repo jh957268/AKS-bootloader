@@ -2490,6 +2490,11 @@ void BootLoaderStateMachine(void)
 			}
 			else
 			{
+				blinkWifiLed = true;
+				blinkPowerLed = true;					// actually is BatLED. blink two leds to indicate waiting for code downloading
+				wifiLedtimeElapsed = 0;
+				powerLedtimeElapsed = 0;
+				digitalWrite(PowerLEDPin, HIGH);		// turn on powerLED, such that user can remove holding the power button
 				bootlaoderState = BOOT_WAIT_ARTNET;			// Not receiving anything, start over
 			}
 			break;
