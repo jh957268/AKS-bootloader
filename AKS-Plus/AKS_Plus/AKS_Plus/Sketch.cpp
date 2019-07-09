@@ -2467,8 +2467,8 @@ void BootLoaderStateMachine(void)
 				{
 					// not enough bytes, and timeread char has waited 10ms with no data 
 					Serial1.clear();						// just for the safe side
-					Serial1.println("err");
-					bootwaittimeElapsed = 0;					// have received a packet, re-start the timer.
+					// Serial1.println("err");				// remove this, since this can abort the ecos with no second trial
+					bootwaittimeElapsed = 0;					// have received a packet but not enough bytes, re-start the timer.
 					break;
 				}
 				
